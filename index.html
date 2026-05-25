@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <title>歡樂賓果</title>
+  <style>
+    /* ── 色票 ── */
+    :root {
+      --brown-dark:  #4A2C0A;   /* 標題列深棕 */
+      --brown-mid:   #7C4F1E;   /* 次要棕色 */
+      --brown-light: #C8A882;   /* 邊框棕 */
+      --bg:          #F0EAE0;   /* 米白背景 */
+      --card:        #FFFFFF;   /* 卡片白 */
+      --border:      #DDD0BE;   /* 卡片邊框 */
+      --green:       #22C55E;   /* 主操作綠 */
+      --green-dark:  #16A34A;
+      --green-light: #DCFCE7;   /* 選取淺綠 */
+      --green-win:   #86EFAC;   /* 連線深綠 */
+      --text:        #3B2008;   /* 主文字 */
+      --text-muted:  #8C7355;   /* 次要文字 */
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: system-ui, -apple-system, '微軟正黑體', sans-serif;
+      background: var(--bg);
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 0 0 24px;
+    }
+
+    /* 頂部標題列 */
+    .title-bar {
+      width: 100%;
+      background: var(--brown-dark);
+      padding: 16px 20px;
+      text-align: center;
+      margin-bottom: 14px;
+    }
+    .title {
+      font-size: 1.8rem;
+      font-weight: 900;
+      color: #FFF8F0;
+      letter-spacing: 3px;
+    }
+
+    .app {
+      width: 100%;
+      max-width: 460px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      padding: 0 12px;
+    }
+
+    .controls {
+      display: flex;
+      gap: 8px;
+    }
+
+    .theme-select {
+      flex: 1;
+      background: var(--card);
+      border: 2px solid var(--border);
+      color: var(--text);
+      font-size: 1rem;
+      font-weight: 700;
+      border-radius: 12px;
+      padding: 10px 14px;
+      outline: none;
+      cursor: pointer;
+    }
+
+    .restart-btn {
+      background: var(--green);
+      color: #fff;
+      border: none;
+      border-radius: 12px;
+      padding: 10px 16px;
+      font-size: 1.3rem;
+      cursor: pointer;
+      box-shadow: 0 2px 8px #22c55e55;
+      -webkit-tap-highlight-color: transparent;
+      transition: background 0.15s;
+    }
+    .restart-btn:active { transform: scale(0.92); background: var(--green-dark); }
+
+    .score-bar {
+      text-align: center;
+      background: var(--card);
+      border: 2px solid var(--border);
+      border-radius: 999px;
+      padding: 8px 16px;
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--text);
+      box-shadow: 0 1px 4px #00000011;
+    }
+
+    /* 狀態列 */
+    .status-bar {
+      text-align: center;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      min-height: 18px;
+    }
+    .status-bar.live     { color: var(--green-dark); }
+    .status-bar.cached   { color: var(--brown-mid); }
+    .status-bar.fallback { color: #B45309; }
+
+    /* 賓果盤 */
+    .board {
+      width: 100%;
+      aspect-ratio: 1;
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 6px;
+      background: var(--brown-light);
+      padding: 8px;
+      border-radius: 20px;
+      border: 4px solid var(--brown-mid);
+      box-shadow: inset 0 2px 8px #00000022;
+    }
+
+    /* 格子 */
+    .cell {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: var(--card);
+      border: none;
+      border-bottom: 4px solid var(--border);
+      border-radius: 10px;
+      padding: 3px 2px 2px;
+      cursor: pointer;
+      overflow: hidden;
+      -webkit-tap-highlight-color: transparent;
+      transition: transform 0.15s, background 0.15s, border-color 0.15s;
+    }
+    .cell:active  { transform: scale(0.90); }
+    .cell.marked  { background: var(--green-light); border-bottom-color: var(--green); }
+    .cell.winning { background: var(--green-win);   border-bottom-color: var(--green-dark); transform: scale(0.94); }
+
+    .cell img {
+      width: 94%; height: 76%;
+      object-fit: contain;
+      border-radius: 6px;
+      mix-blend-mode: multiply;   /* 白色背景融入格子，食物主體突出 */
+    }
+    .cell .fallback {
+      width: 94%; height: 76%;
+      display: none;
+      align-items: center; justify-content: center;
+      font-size: 1.6rem;
+      background: #F5EFE6;
+      border-radius: 6px;
+    }
+    .cell .star {
+      position: absolute; top: 2px; right: 3px;
+      font-size: 0.65rem; display: none;
+    }
+    .cell.marked .star { display: block; }
+    .cell-label {
+      font-size: 9px; font-weight: 700; color: var(--text);
+      margin-top: 2px; width: 100%; text-align: center;
+      overflow: hidden; text-overflow: ellipsis;
+      white-space: nowrap; padding: 0 2px; line-height: 1.2;
+    }
+
+    /* 骨架 */
+    .skeleton {
+      background: linear-gradient(90deg, #E8DDD0 25%, #D4C4B0 50%, #E8DDD0 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.2s infinite;
+      border-radius: 10px;
+    }
+    @keyframes shimmer {
+      0%   { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+
+    .hint { text-align: center; color: var(--text-muted); font-size: 0.85rem; }
+
+    /* 勝利 Modal */
+    .modal {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.5);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 100; padding: 20px;
+    }
+    .modal-box {
+      background: var(--card); border-radius: 24px;
+      padding: 36px 28px; text-align: center;
+      width: 100%; max-width: 320px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+      animation: pop-in 0.35s cubic-bezier(0.34,1.56,0.64,1);
+    }
+    @keyframes pop-in {
+      from { transform: scale(0.6); opacity: 0; }
+      to   { transform: scale(1);   opacity: 1; }
+    }
+    .modal-icon  { font-size: 4rem; margin-bottom: 8px; }
+    .modal-title { font-size: 2.5rem; font-weight: 900; color: var(--brown-dark); margin-bottom: 6px; }
+    .modal-sub   { color: var(--text-muted); font-size: 1.1rem; margin-bottom: 4px; }
+    .modal-lines { color: var(--brown-light); font-size: 0.95rem; margin-bottom: 24px; }
+    .play-again-btn {
+      width: 100%; background: var(--green); color: #fff;
+      border: none; border-radius: 14px; padding: 16px;
+      font-size: 1.2rem; font-weight: 800; cursor: pointer;
+      box-shadow: 0 4px 12px #22c55e44;
+    }
+    .play-again-btn:active { transform: scale(0.96); background: var(--green-dark); }
+  </style>
+</head>
+<body>
+<div class="title-bar">
+  <h1 class="title">✨ 歡樂賓果 ✨</h1>
+</div>
+
+<div class="app">
+
+  <div class="controls">
+    <select id="themeSelect" class="theme-select">
+      <option value="vege">🥦 蔬菜</option>
+      <option value="fruit">🍎 水果</option>
+      <option value="number">🔢 數字</option>
+    </select>
+    <button id="restartBtn" class="restart-btn" title="重新開始">🔄</button>
+  </div>
+
+  <div class="score-bar">
+    <span id="scoreText">連線：0 / 5 💪</span>
+  </div>
+
+  <div id="board" class="board"></div>
+
+  <div id="statusBar" class="status-bar"></div>
+  <p class="hint">連成 5 條線就 BINGO 🎉</p>
+</div>
+
+<div id="modal" class="modal" style="display:none">
+  <div class="modal-box">
+    <div class="modal-icon">🏆</div>
+    <div class="modal-title">BINGO！</div>
+    <div class="modal-sub">太厲害了！</div>
+    <div class="modal-lines" id="modalLines"></div>
+    <button id="playAgainBtn" class="play-again-btn">再玩一次 🎮</button>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════
+//  備用靜態清單（已全部核對代碼正確）
+// ═══════════════════════════════════════
+const FALLBACK = {
+  vege: [
+    { name: '高麗菜', code: 'LA1' },
+    { name: '花胡瓜', code: 'FD1' },
+    { name: '包心白', code: 'LC1' },
+    { name: '空心菜', code: 'LF2' },
+    { name: '絲瓜',   code: 'FF1' },
+    { name: '苦瓜',   code: 'FG1' },
+    { name: '青江菜', code: 'LD1' },
+    { name: '小白菜', code: 'LB1' },
+    { name: '萵苣',   code: 'LI3' },
+    { name: '油菜',   code: 'LN1' },
+    { name: '花椰菜', code: 'FB1' },
+    { name: '冬瓜',   code: 'FE1' },
+    { name: '白蘿蔔', code: 'SA3' },
+    { name: '紅蘿蔔', code: 'SB2' },
+    { name: '菜豆',   code: 'FM2' },
+    { name: '芥藍菜', code: 'LK2' },
+    { name: '洋蔥',   code: 'SD1' },
+    { name: '青蔥',   code: 'SE2' },
+    { name: '大番茄', code: 'FJ1' },
+    { name: '茄子',   code: 'FI1' },
+    { name: '韭菜',   code: 'SF4' },
+    { name: '芹菜',   code: 'LG1' },
+    { name: '綠豆芽', code: 'SX1' },
+    { name: '敏豆',   code: 'FN2' },
+    { name: '甜玉米', code: 'FY6' },
+  ].map(v => ({ ...v, imgUrl: `https://www.twfood.cc/img/code/${v.code}/_.jpg` })),
+
+  number: Array.from({ length: 25 }, (_, i) => ({ name: String(i + 1), imgUrl: '' })),
+
+  fruit: [
+    { name: '鳳梨',   imgUrl: 'https://www.twfood.cc/img/code/B1/_.jpg' },
+    { name: '大西瓜', imgUrl: 'https://www.twfood.cc/img/code/T2/_.jpg' },
+    { name: '芒果',   imgUrl: 'https://www.twfood.cc/img/code/R1/_.jpg' },
+    { name: '木瓜',   imgUrl: 'https://www.twfood.cc/img/code/I1/_.jpg' },
+    { name: '香蕉',   imgUrl: 'https://www.twfood.cc/img/code/A1/_.jpg' },
+    { name: '芭樂',   imgUrl: 'https://www.twfood.cc/img/code/P1/_.jpg' },
+    { name: '美濃瓜', imgUrl: 'https://www.twfood.cc/img/code/V1/_.jpg' },
+    { name: '哈密瓜', imgUrl: 'https://www.twfood.cc/img/code/W1/_.jpg' },
+    { name: '蘋果',   imgUrl: 'https://www.twfood.cc/img/code/X69/_.jpg' },
+    { name: '奇異果', imgUrl: 'https://www.twfood.cc/img/code/G49/_.jpg' },
+    { name: '檸檬',   imgUrl: 'https://www.twfood.cc/img/code/F1/_.jpg' },
+    { name: '葡萄',   imgUrl: 'https://www.twfood.cc/img/code/S1/_.jpg' },
+    { name: '柳橙',   imgUrl: 'https://www.twfood.cc/img/code/E1/_.jpg' },
+    { name: '椪柑',   imgUrl: 'https://www.twfood.cc/img/code/C1/_.jpg' },
+    { name: '文旦柚', imgUrl: 'https://www.twfood.cc/img/code/H1/_.jpg' },
+    { name: '荔枝',   imgUrl: 'https://www.twfood.cc/img/code/J1/_.jpg' },
+    { name: '龍眼',   imgUrl: 'https://www.twfood.cc/img/code/K2/_.jpg' },
+    { name: '枇杷',   imgUrl: 'https://www.twfood.cc/img/code/L1/_.jpg' },
+    { name: '楊桃',   imgUrl: 'https://www.twfood.cc/img/code/M1/_.jpg' },
+    { name: '李子',   imgUrl: 'https://www.twfood.cc/img/code/N1/_.jpg' },
+    { name: '梨子',   imgUrl: 'https://www.twfood.cc/img/code/O1/_.jpg' },
+    { name: '蓮霧',   imgUrl: 'https://www.twfood.cc/img/code/Q1/_.jpg' },
+    { name: '酪梨',   imgUrl: 'https://www.twfood.cc/img/code/G3/_.jpg' },
+    { name: '茂谷柑', imgUrl: 'https://www.twfood.cc/img/code/C2/_.jpg' },
+    { name: '桶柑',   imgUrl: 'https://www.twfood.cc/img/code/D1/_.jpg' },
+  ]
+};
+
+// ═══════════════════════════════════════
+//  快取設定
+// ═══════════════════════════════════════
+const CACHE_KEY = 'twfood_v6';           // 版本升級，自動拋棄舊快取
+const CACHE_TTL = 7 * 24 * 60 * 60 * 1000; // 7 天
+
+// ═══════════════════════════════════════
+//  遊戲狀態
+// ═══════════════════════════════════════
+const WINNING_LINES = [
+  [0,1,2,3,4],[5,6,7,8,9],[10,11,12,13,14],[15,16,17,18,19],[20,21,22,23,24],
+  [0,5,10,15,20],[1,6,11,16,21],[2,7,12,17,22],[3,8,13,18,23],[4,9,14,19,24],
+  [0,6,12,18,24],[4,8,12,16,20]
+];
+
+let DATA = { vege: null, fruit: null }; // 目前用的資料
+let board = [], marked = Array(25).fill(false);
+let linesCount = 0, isBingo = false, winCells = new Set();
+
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function fallbackEmoji(name) {
+  if (name.includes('番茄')) return '🍅';
+  if (name.includes('茄子')) return '🍆';
+  if (name.includes('玉米')) return '🌽';
+  if (name.includes('蘿蔔')) return '🥕';
+  if (name.includes('蔥') || name.includes('蒜')) return '🧅';
+  if (name.includes('豆'))  return '🫘';
+  if (name.includes('瓜'))  return '🥒';
+  if (name.includes('菜'))  return '🥬';
+  if (name.includes('西瓜')) return '🍉';
+  if (name.includes('鳳梨')) return '🍍';
+  if (name.includes('芒果')) return '🥭';
+  if (name.includes('香蕉')) return '🍌';
+  if (name.includes('葡萄')) return '🍇';
+  if (name.includes('蘋果')) return '🍎';
+  if (name.includes('檸檬')) return '🍋';
+  if (name.includes('荔枝') || name.includes('龍眼')) return '🍈';
+  if (name.includes('柳橙') || name.includes('柑') || name.includes('柚')) return '🍊';
+  if (name.includes('梨')) return '🍐';
+  if (name.includes('李')) return '🍑';
+  if (name.includes('蓮霧')) return '🍒';
+  if (name.includes('酪梨')) return '🥑';
+  return '🌿';
+}
+
+// ═══════════════════════════════════════
+//  動態抓取邏輯
+// ═══════════════════════════════════════
+
+// 已知無圖代碼 → 替換為正確代碼
+const CODE_FIX = {
+  'T1': 'T2',   // 大西瓜 T1 無圖，改用 T2（無子西瓜）
+};
+
+// 從 HTML 字串解析品項（從 href 路徑取名，避免 textContent 含市場地名）
+function parseItems(html, type) {
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(html, 'text/html');
+  const items = [];
+  const seenCodes = new Set();
+  const seenNames = new Set();
+
+  doc.querySelectorAll(`a[href^="/${type}/"]`).forEach(a => {
+    if (!(a.textContent || '').includes('推薦No:')) return; // 只取推薦品項
+
+    const href = a.getAttribute('href') || '';
+    // href 格式：/vege/LA1/甘藍-初秋(高麗菜,捲心菜)
+    const parts = href.split('/');
+    // parts: ['', 'vege', 'LA1', '甘藍-初秋(高麗菜,捲心菜)']
+    if (parts.length < 4) return;
+
+    const code = parts[2];
+    if (!code || seenCodes.has(code)) return;
+    seenCodes.add(code);
+
+    // 解析品名：從路徑第三段取（URL decode）
+    const raw = decodeURIComponent(parts[3] || '').replace(/\+/g, ' ');
+    let name;
+    const parenMatch = raw.match(/[（(]([^）)]+)[）)]/);
+    if (parenMatch) {
+      // 括號內取第一個名稱（如「高麗菜,捲心菜」→「高麗菜」）
+      name = parenMatch[1].split(/[,，]/)[0].trim();
+    } else {
+      const segs = raw.split(/[-－]/);
+      const prefix = segs[0].trim();
+      const suffix = (segs[1] || '').trim();
+      // 通用類別名稱（如「雜柑」）→ 改用後段具體品名
+      const GENERIC = new Set(['雜柑', '雜果', '其他']);
+      name = (GENERIC.has(prefix) && suffix) ? suffix : prefix;
+    }
+
+    // 名稱異常過濾
+    if (!name || name.length > 8 || seenNames.has(name)) return;
+    seenNames.add(name);
+
+    const fixedCode = CODE_FIX[code] || code;
+    items.push({
+      name,
+      imgUrl: `https://www.twfood.cc/img/code/${fixedCode}/_.jpg`
+    });
+  });
+
+  return items;
+}
+
+// 透過 CORS Proxy 抓取網頁
+async function fetchViaProxy(url) {
+  const enc = encodeURIComponent(url);
+
+  // Proxy 1：corsproxy.io（測試有效，優先使用）
+  try {
+    const r = await fetch(`https://corsproxy.io/?${enc}`,
+      { signal: AbortSignal.timeout(10000) });
+    if (r.ok) return await r.text();
+  } catch {}
+
+  // Proxy 2：allorigins.win → 回傳 { contents: '...' }
+  try {
+    const r = await fetch(`https://api.allorigins.win/get?url=${enc}`,
+      { signal: AbortSignal.timeout(10000) });
+    if (r.ok) {
+      const j = await r.json();
+      if (j && j.contents) return j.contents;
+    }
+  } catch {}
+
+  // 最後嘗試直接抓
+  const r = await fetch(url, { signal: AbortSignal.timeout(10000) });
+  return await r.text();
+}
+
+// 抓取某類別的完整推薦清單（不足 25 筆就繼續翻頁，最多抓到第 20 頁）
+async function fetchCategory(type) {
+  const seenUrls  = new Set();
+  const seenNames = new Set();
+  const items = [];
+
+  function addItems(pageItems) {
+    for (const item of pageItems) {
+      if (items.length >= 25) break;
+      if (!seenUrls.has(item.imgUrl) && !seenNames.has(item.name)) {
+        seenUrls.add(item.imgUrl);
+        seenNames.add(item.name);
+        items.push(item);
+      }
+    }
+  }
+
+  // 先平行抓前 5 頁（加快速度）
+  const firstBatch = await Promise.all(
+    [1, 2, 3, 4, 5].map(p =>
+      fetchViaProxy(`https://www.twfood.cc/${type}?page=${p}&per-page=5`)
+        .then(html => parseItems(html, type))
+        .catch(() => [])
+    )
+  );
+  firstBatch.forEach(addItems);
+
+  // 不足 25 筆：逐頁繼續抓（第 6 頁起，直到夠或到第 20 頁）
+  for (let page = 6; items.length < 25 && page <= 20; page++) {
+    try {
+      const html = await fetchViaProxy(`https://www.twfood.cc/${type}?page=${page}&per-page=5`);
+      const pageItems = parseItems(html, type);
+      if (pageItems.length === 0) break; // 沒有更多頁了
+      addItems(pageItems);
+    } catch {
+      break;
+    }
+  }
+
+  return items.slice(0, 25);
+}
+
+// 主要載入流程
+async function loadData() {
+  setStatus('⏳ 正在抓取當季推薦…');
+
+  // 1. 先檢查 localStorage 快取
+  try {
+    const raw = localStorage.getItem(CACHE_KEY);
+    if (raw) {
+      const { data, timestamp, vegeCount, fruitCount } = JSON.parse(raw);
+      const age = Date.now() - timestamp;
+      const days = Math.floor(age / 86400000);
+      if (age < CACHE_TTL && data.vege?.length >= 25 && data.fruit?.length >= 25) {
+        DATA = data;
+        setStatus(`🌱 當季推薦（快取 ${days} 天前）`, 'cached');
+        return;
+      }
+    }
+  } catch {}
+
+  // 2. 嘗試動態抓取
+  try {
+    const [vegeItems, fruitItems] = await Promise.all([
+      fetchCategory('vege'),
+      fetchCategory('fruit'),
+    ]);
+
+    if (vegeItems.length >= 25 && fruitItems.length >= 25) {
+      DATA = { vege: vegeItems, fruit: fruitItems };
+      try {
+        localStorage.setItem(CACHE_KEY, JSON.stringify({
+          data: DATA,
+          timestamp: Date.now()
+        }));
+      } catch {}
+      setStatus('🌱 當季推薦（即時更新）', 'live');
+      return;
+    }
+
+    // 抓到但不足 25 筆 → 合併靜態清單補足
+    if (vegeItems.length > 0 || fruitItems.length > 0) {
+      DATA = {
+        vege: mergeWithFallback(vegeItems, FALLBACK.vege),
+        fruit: mergeWithFallback(fruitItems, FALLBACK.fruit),
+      };
+      setStatus(`🌱 當季推薦 + 補充清單`, 'live');
+      return;
+    }
+  } catch (e) {
+    console.warn('動態抓取失敗：', e);
+  }
+
+  // 3. 完全失敗 → 用靜態備用清單
+  DATA = { vege: FALLBACK.vege, fruit: FALLBACK.fruit };
+  setStatus('📋 使用備用清單', 'fallback');
+}
+
+// 合併當季品項與靜態備用（補足至 25 筆，url 與名稱都去重）
+function mergeWithFallback(live, fallback) {
+  const seenUrls  = new Set(live.map(i => i.imgUrl));
+  const seenNames = new Set(live.map(i => i.name));
+  const extra = fallback.filter(i => !seenUrls.has(i.imgUrl) && !seenNames.has(i.name));
+  return [...live, ...extra].slice(0, 25);
+}
+
+function setStatus(msg, type = '') {
+  const el = document.getElementById('statusBar');
+  el.textContent = msg;
+  el.className = `status-bar ${type}`;
+}
+
+// ═══════════════════════════════════════
+//  遊戲邏輯
+// ═══════════════════════════════════════
+function getTheme() {
+  return document.getElementById('themeSelect').value;
+}
+
+function initGame() {
+  const theme = getTheme();
+  const pool = DATA[theme] || FALLBACK[theme];
+  board = shuffle(pool);
+  marked = Array(25).fill(false);
+  linesCount = 0; isBingo = false; winCells = new Set();
+  renderBoard();
+  updateScore();
+  document.getElementById('modal').style.display = 'none';
+}
+
+function showSkeleton() {
+  const boardEl = document.getElementById('board');
+  boardEl.innerHTML = '';
+  for (let i = 0; i < 25; i++) {
+    const div = document.createElement('div');
+    div.className = 'cell skeleton';
+    boardEl.appendChild(div);
+  }
+}
+
+function renderBoard() {
+  const boardEl = document.getElementById('board');
+  boardEl.innerHTML = '';
+  board.forEach((item, i) => {
+    const cell = document.createElement('button');
+    cell.className = 'cell';
+    cell.setAttribute('aria-label', item.name);
+
+    const star = document.createElement('span');
+    star.className = 'star';
+    star.textContent = '⭐';
+
+    if (!item.imgUrl) {
+      // ── 數字主題 ──
+      const NUM_COLORS = [
+        '#ef4444','#f97316','#f59e0b','#22c55e','#14b8a6',
+        '#3b82f6','#8b5cf6','#ec4899','#06b6d4','#84cc16'
+      ];
+      const col = NUM_COLORS[(parseInt(item.name) - 1) % NUM_COLORS.length];
+      const numDiv = document.createElement('div');
+      numDiv.style.cssText = [
+        'width:82%', 'height:72%', 'display:flex',
+        'align-items:center', 'justify-content:center',
+        'border-radius:12px',
+        `background:${col}22`,
+        `color:${col}`,
+        'font-size:2rem', 'font-weight:900', 'line-height:1'
+      ].join(';');
+      numDiv.textContent = item.name;
+      cell.appendChild(numDiv);
+      cell.appendChild(star);
+    } else {
+      // ── 圖片主題（蔬菜 / 水果）──
+      const img = document.createElement('img');
+      img.src = item.imgUrl;
+      img.alt = item.name;
+      img.loading = 'lazy';
+      img.onerror = function () {
+        this.style.display = 'none';
+        cell.querySelector('.fallback').style.display = 'flex';
+      };
+
+      const fb = document.createElement('div');
+      fb.className = 'fallback';
+      fb.textContent = fallbackEmoji(item.name);
+
+      const label = document.createElement('span');
+      label.className = 'cell-label';
+      label.textContent = item.name;
+
+      cell.appendChild(img);
+      cell.appendChild(fb);
+      cell.appendChild(star);
+      cell.appendChild(label);
+    }
+    cell.addEventListener('click', () => handleClick(i));
+    boardEl.appendChild(cell);
+  });
+}
+
+function handleClick(i) {
+  if (isBingo) return;
+  marked[i] = !marked[i];
+  let count = 0;
+  const cells = new Set();
+  WINNING_LINES.forEach(line => {
+    if (line.every(idx => marked[idx])) {
+      count++;
+      line.forEach(idx => cells.add(idx));
+    }
+  });
+  linesCount = count; winCells = cells;
+  refreshCells();
+  updateScore();
+  if (count >= 5) {
+    isBingo = true;
+    setTimeout(showModal, 350);
+  }
+}
+
+function refreshCells() {
+  document.querySelectorAll('.cell').forEach((cell, i) => {
+    cell.classList.toggle('marked',  marked[i]);
+    cell.classList.toggle('winning', winCells.has(i));
+  });
+}
+
+function updateScore() {
+  const emoji = linesCount >= 5 ? '🎉' : linesCount >= 3 ? '🔥' : linesCount >= 1 ? '⭐' : '💪';
+  document.getElementById('scoreText').textContent = `連線：${linesCount} / 5 ${emoji}`;
+}
+
+function showModal() {
+  document.getElementById('modalLines').textContent = `共連線 ${linesCount} 條，你贏了！`;
+  document.getElementById('modal').style.display = 'flex';
+}
+
+// ═══════════════════════════════════════
+//  事件 & 啟動
+// ═══════════════════════════════════════
+document.getElementById('restartBtn').addEventListener('click', initGame);
+document.getElementById('themeSelect').addEventListener('change', initGame);
+document.getElementById('playAgainBtn').addEventListener('click', initGame);
+
+// 啟動：先顯示骨架，再載入資料，最後開始遊戲
+(async () => {
+  showSkeleton();
+  await loadData();
+  initGame();
+})();
+</script>
+</body>
+</html>
