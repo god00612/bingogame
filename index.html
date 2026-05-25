@@ -431,136 +431,46 @@ function parseItems(html, type) {
   return items;
 }
 
-// 透過 CORS Proxy 抓取網頁
-async function fetchViaProxy(url) {
-  const enc = encodeURIComponent(url);
-
-  // Proxy 1：corsproxy.io（測試有效，優先使用）
-  try {
-    const r = await fetch(`https://corsproxy.io/?${enc}`,
-      { signal: AbortSignal.timeout(10000) });
-    if (r.ok) return await r.text();
-  } catch {}
-
-  // Proxy 2：allorigins.win → 回傳 { contents: '...' }
-  try {
-    const r = await fetch(`https://api.allorigins.win/get?url=${enc}`,
-      { signal: AbortSignal.timeout(10000) });
-    if (r.ok) {
-      const j = await r.json();
-      if (j && j.contents) return j.contents;
-    }
-  } catch {}
-
-  // 最後嘗試直接抓
-  const r = await fetch(url, { signal: AbortSignal.timeout(10000) });
-  return await r.text();
-}
-
-// 抓取某類別的完整推薦清單（不足 25 筆就繼續翻頁，最多抓到第 20 頁）
-async function fetchCategory(type) {
-  const seenUrls  = new Set();
-  const seenNames = new Set();
-  const items = [];
-
-  function addItems(pageItems) {
-    for (const item of pageItems) {
-      if (items.length >= 25) break;
-      if (!seenUrls.has(item.imgUrl) && !seenNames.has(item.name)) {
-        seenUrls.add(item.imgUrl);
-        seenNames.add(item.name);
-        items.push(item);
-      }
-    }
-  }
-
-  // 先平行抓前 5 頁（加快速度）
-  const firstBatch = await Promise.all(
-    [1, 2, 3, 4, 5].map(p =>
-      fetchViaProxy(`https://www.twfood.cc/${type}?page=${p}&per-page=5`)
-        .then(html => parseItems(html, type))
-        .catch(() => [])
-    )
-  );
-  firstBatch.forEach(addItems);
-
-  // 不足 25 筆：逐頁繼續抓（第 6 頁起，直到夠或到第 20 頁）
-  for (let page = 6; items.length < 25 && page <= 20; page++) {
-    try {
-      const html = await fetchViaProxy(`https://www.twfood.cc/${type}?page=${page}&per-page=5`);
-      const pageItems = parseItems(html, type);
-      if (pageItems.length === 0) break; // 沒有更多頁了
-      addItems(pageItems);
-    } catch {
-      break;
-    }
-  }
-
-  return items.slice(0, 25);
-}
-
-// 主要載入流程
+// 主要載入流程（從同源 data.json 讀取，所有裝置拿到相同清單）
 async function loadData() {
-  setStatus('⏳ 正在抓取當季推薦…');
+  setStatus('⏳ 正在載入清單…');
 
-  // 1. 先檢查 localStorage 快取
+  // 1. 先檢查 localStorage 快取（TTL 7 天）
   try {
     const raw = localStorage.getItem(CACHE_KEY);
     if (raw) {
-      const { data, timestamp, vegeCount, fruitCount } = JSON.parse(raw);
-      const age = Date.now() - timestamp;
+      const { data, timestamp } = JSON.parse(raw);
+      const age  = Date.now() - timestamp;
       const days = Math.floor(age / 86400000);
       if (age < CACHE_TTL && data.vege?.length >= 25 && data.fruit?.length >= 25) {
         DATA = data;
-        setStatus(`🌱 當季推薦（快取 ${days} 天前）`, 'cached');
+        setStatus(`🌱 當季清單（${days} 天前更新）`, 'cached');
         return;
       }
     }
   } catch {}
 
-  // 2. 嘗試動態抓取
+  // 2. 讀取 data.json（由 GitHub Actions 每月更新，同源無 CORS 問題）
   try {
-    const [vegeItems, fruitItems] = await Promise.all([
-      fetchCategory('vege'),
-      fetchCategory('fruit'),
-    ]);
-
-    if (vegeItems.length >= 25 && fruitItems.length >= 25) {
-      DATA = { vege: vegeItems, fruit: fruitItems };
-      try {
-        localStorage.setItem(CACHE_KEY, JSON.stringify({
-          data: DATA,
-          timestamp: Date.now()
-        }));
-      } catch {}
-      setStatus('🌱 當季推薦（即時更新）', 'live');
-      return;
-    }
-
-    // 抓到但不足 25 筆 → 合併靜態清單補足
-    if (vegeItems.length > 0 || fruitItems.length > 0) {
-      DATA = {
-        vege: mergeWithFallback(vegeItems, FALLBACK.vege),
-        fruit: mergeWithFallback(fruitItems, FALLBACK.fruit),
-      };
-      setStatus(`🌱 當季推薦 + 補充清單`, 'live');
-      return;
+    const r = await fetch('./data.json', { signal: AbortSignal.timeout(8000) });
+    if (r.ok) {
+      const json = await r.json();
+      if (json.vege?.length >= 25 && json.fruit?.length >= 25) {
+        DATA = { vege: json.vege, fruit: json.fruit };
+        try {
+          localStorage.setItem(CACHE_KEY, JSON.stringify({ data: DATA, timestamp: Date.now() }));
+        } catch {}
+        setStatus(`🌱 當季清單（${json.updated || '最新'}）`, 'live');
+        return;
+      }
     }
   } catch (e) {
-    console.warn('動態抓取失敗：', e);
+    console.warn('data.json 讀取失敗：', e);
   }
 
-  // 3. 完全失敗 → 用靜態備用清單
+  // 3. 備用靜態清單
   DATA = { vege: FALLBACK.vege, fruit: FALLBACK.fruit };
   setStatus('📋 使用備用清單', 'fallback');
-}
-
-// 合併當季品項與靜態備用（補足至 25 筆，url 與名稱都去重）
-function mergeWithFallback(live, fallback) {
-  const seenUrls  = new Set(live.map(i => i.imgUrl));
-  const seenNames = new Set(live.map(i => i.name));
-  const extra = fallback.filter(i => !seenUrls.has(i.imgUrl) && !seenNames.has(i.name));
-  return [...live, ...extra].slice(0, 25);
 }
 
 function setStatus(msg, type = '') {
