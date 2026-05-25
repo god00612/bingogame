@@ -26,7 +26,8 @@
       --brown-mid:   #7C4F1E;   /* 次要棕色 */
       --brown-light: #C8A882;   /* 邊框棕 */
       --bg:          #F0EAE0;   /* 米白背景 */
-      --card:        #FFFFFF;   /* 卡片白 */
+      --card:        #FFFFFF;   /* 卡片白（modal 用） */
+      --cell-bg:     #FFFFFF;   /* 格子底色：白色 */
       --border:      #DDD0BE;   /* 卡片邊框 */
       --green:       #22C55E;   /* 主操作綠 */
       --green-dark:  #16A34A;
@@ -148,7 +149,7 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      background: var(--card);
+      background: var(--cell-bg);
       border: none;
       border-bottom: 4px solid var(--border);
       border-radius: 10px;
@@ -190,7 +191,7 @@
       display: none;
       align-items: center; justify-content: center;
       font-size: 1.6rem;
-      background: #F5EFE6;
+      background: var(--cell-bg);
       border-radius: 6px;
     }
     .cell-label {
@@ -431,17 +432,32 @@ function parseItems(html, type) {
     // 解析品名：從路徑第三段取（URL decode）
     const raw = decodeURIComponent(parts[3] || '').replace(/\+/g, ' ');
     let name;
+    // 通用前綴（縣市名、類別名、市場地名）
+    const GENERIC_PREFIXES = new Set([
+      '雜柑','雜果','其他',
+      '台北','台中','台南','高雄','桃園','新北','基隆','新竹',
+      '苗栗','彰化','南投','雲林','嘉義','屏東','宜蘭','花蓮','台東',
+      '溪湖','西螺','豐原','彰化市'
+    ]);
+    const isGenericStr = s => GENERIC_PREFIXES.has(s) || s.endsWith('類') || s.endsWith('等') || s.endsWith('市場');
+
     const parenMatch = raw.match(/[（(]([^）)]+)[）)]/);
     if (parenMatch) {
-      // 括號內取第一個名稱（如「高麗菜,捲心菜」→「高麗菜」）
-      name = parenMatch[1].split(/[,，]/)[0].trim();
+      const first = parenMatch[1].split(/[,，]/)[0].trim();
+      if (isGenericStr(first)) {
+        // 括號內是市場/地名 → 改取括號前的主名（破折號前段）
+        const base = raw.slice(0, parenMatch.index).trim();
+        name = base.split(/[-－]/)[0].trim();
+      } else {
+        name = first;
+      }
     } else {
       const segs = raw.split(/[-－]/);
       const prefix = segs[0].trim();
       const suffix = (segs[1] || '').trim();
-      // 通用類別名稱（如「雜柑」）→ 改用後段具體品名
-      const GENERIC = new Set(['雜柑', '雜果', '其他']);
-      name = (GENERIC.has(prefix) && suffix) ? suffix : prefix;
+      const isGeneric = isGenericStr(prefix);
+      if (isGeneric && !suffix) return; // 無具體品名，跳過
+      name = isGeneric ? suffix : prefix;
     }
 
     // 名稱異常過濾

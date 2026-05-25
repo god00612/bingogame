@@ -9,8 +9,12 @@ from datetime import date
 # 已知無圖代碼 → 替換
 CODE_FIX = {'T1': 'T2'}
 
-# 通用類別名稱（取破折號後的具體品名）
-GENERIC = {'雜柑', '雜果', '其他'}
+# 通用前綴（縣市名、類別名）→ 改取後段具體品名
+GENERIC = {
+    '雜柑', '雜果', '其他',
+    '台北', '台中', '台南', '高雄', '桃園', '新北', '基隆', '新竹',
+    '苗栗', '彰化', '南投', '雲林', '嘉義', '屏東', '宜蘭', '花蓮', '台東',
+}
 
 
 def fetch_page(url):
@@ -38,14 +42,26 @@ def parse_items(html, type_):
 
         raw = unquote(path_seg).replace('+', ' ')
 
+        def is_generic_str(s):
+            return (s in GENERIC or s.endswith('類') or s.endswith('等') or s.endswith('市場'))
+
         paren = re.search(r'[（(]([^）)]+)[）)]', raw)
         if paren:
-            name = re.split(r'[,，]', paren.group(1))[0].strip()
+            first = re.split(r'[,，]', paren.group(1))[0].strip()
+            if is_generic_str(first):
+                # 括號內是市場/地名 → 取括號前主名（破折號前段）
+                base = raw[:paren.start()].strip()
+                name = re.split(r'[-－]', base)[0].strip()
+            else:
+                name = first
         else:
-            segs   = re.split(r'[-－]', raw)
-            prefix = segs[0].strip()
-            suffix = segs[1].strip() if len(segs) > 1 else ''
-            name   = suffix if prefix in GENERIC and suffix else prefix
+            segs       = re.split(r'[-－]', raw)
+            prefix     = segs[0].strip()
+            suffix     = segs[1].strip() if len(segs) > 1 else ''
+            is_generic = is_generic_str(prefix)
+            if is_generic and not suffix:
+                continue  # 無具體品名，跳過
+            name = suffix if is_generic else prefix
 
         if not name or len(name) > 8 or name in seen_names:
             continue
