@@ -6,6 +6,18 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
+  <script>
+    // 強制每月取得最新版本（Safari 快取破解）
+    (function () {
+      const d = new Date();
+      const ver = d.getFullYear() + '' + String(d.getMonth() + 1).padStart(2, '0');
+      const u = new URL(location.href);
+      if (u.searchParams.get('v') !== ver) {
+        u.searchParams.set('v', ver);
+        location.replace(u.toString());
+      }
+    })();
+  </script>
   <title>歡樂賓果</title>
   <style>
     /* ── 色票 ── */
