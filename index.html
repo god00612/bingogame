@@ -144,14 +144,31 @@
       transition: transform 0.15s, background 0.15s, border-color 0.15s;
     }
     .cell:active  { transform: scale(0.90); }
-    .cell.marked  { background: var(--green-light); border-bottom-color: var(--green); }
-    .cell.winning { background: var(--green-win);   border-bottom-color: var(--green-dark); transform: scale(0.94); }
+
+    /* 選取：變暗 + 白字 */
+    .cell.marked  {
+      background: var(--brown-dark);
+      border-bottom-color: #1a0e04;
+    }
+    .cell.marked img     { filter: brightness(0.45); mix-blend-mode: normal; }
+    .cell.marked .fallback { background: #2a1608; }
+    .cell.marked .cell-label { color: #fff; }
+
+    /* 連線：深棕加亮邊 */
+    .cell.winning {
+      background: #2a1608;
+      border-bottom-color: var(--green);
+      border-top: 2px solid var(--green);
+      transform: scale(0.94);
+    }
+    .cell.winning img     { filter: brightness(0.35); mix-blend-mode: normal; }
+    .cell.winning .cell-label { color: var(--green); }
 
     .cell img {
       width: 94%; height: 76%;
       object-fit: contain;
       border-radius: 6px;
-      mix-blend-mode: multiply;   /* 白色背景融入格子，食物主體突出 */
+      mix-blend-mode: multiply;
     }
     .cell .fallback {
       width: 94%; height: 76%;
@@ -161,11 +178,6 @@
       background: #F5EFE6;
       border-radius: 6px;
     }
-    .cell .star {
-      position: absolute; top: 2px; right: 3px;
-      font-size: 0.65rem; display: none;
-    }
-    .cell.marked .star { display: block; }
     .cell-label {
       font-size: 9px; font-weight: 700; color: var(--text);
       margin-top: 2px; width: 100%; text-align: center;
@@ -515,10 +527,6 @@ function renderBoard() {
     cell.className = 'cell';
     cell.setAttribute('aria-label', item.name);
 
-    const star = document.createElement('span');
-    star.className = 'star';
-    star.textContent = '⭐';
-
     if (!item.imgUrl) {
       // ── 數字主題 ──
       const NUM_COLORS = [
@@ -537,7 +545,6 @@ function renderBoard() {
       ].join(';');
       numDiv.textContent = item.name;
       cell.appendChild(numDiv);
-      cell.appendChild(star);
     } else {
       // ── 圖片主題（蔬菜 / 水果）──
       const img = document.createElement('img');
@@ -559,7 +566,6 @@ function renderBoard() {
 
       cell.appendChild(img);
       cell.appendChild(fb);
-      cell.appendChild(star);
       cell.appendChild(label);
     }
     cell.addEventListener('click', () => handleClick(i));
