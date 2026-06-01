@@ -1,5 +1,5 @@
 {
-  "updated": "2026-05-25",
+  "updated": "2026-06-01",
   "vege": [
     {
       "name": "高麗菜",
@@ -14,88 +14,88 @@
       "imgUrl": "https://www.twfood.cc/img/code/FD1/_.jpg"
     },
     {
-      "name": "空心菜",
-      "imgUrl": "https://www.twfood.cc/img/code/LF2/_.jpg"
-    },
-    {
       "name": "絲瓜",
       "imgUrl": "https://www.twfood.cc/img/code/FF1/_.jpg"
+    },
+    {
+      "name": "空心菜",
+      "imgUrl": "https://www.twfood.cc/img/code/LF2/_.jpg"
     },
     {
       "name": "苦瓜",
       "imgUrl": "https://www.twfood.cc/img/code/FG1/_.jpg"
     },
     {
-      "name": "茄子",
-      "imgUrl": "https://www.twfood.cc/img/code/FI2/_.jpg"
-    },
-    {
       "name": "湯匙菜",
       "imgUrl": "https://www.twfood.cc/img/code/LD1/_.jpg"
-    },
-    {
-      "name": "胡瓜",
-      "imgUrl": "https://www.twfood.cc/img/code/FC1/_.jpg"
-    },
-    {
-      "name": "小松菜",
-      "imgUrl": "https://www.twfood.cc/img/code/LN1/_.jpg"
-    },
-    {
-      "name": "洋蔥",
-      "imgUrl": "https://www.twfood.cc/img/code/SD1/_.jpg"
-    },
-    {
-      "name": "冬瓜",
-      "imgUrl": "https://www.twfood.cc/img/code/FE1/_.jpg"
     },
     {
       "name": "青花菜",
       "imgUrl": "https://www.twfood.cc/img/code/FB1/_.jpg"
     },
     {
-      "name": "青蔥",
-      "imgUrl": "https://www.twfood.cc/img/code/SE6/_.jpg"
+      "name": "小松菜",
+      "imgUrl": "https://www.twfood.cc/img/code/LN1/_.jpg"
+    },
+    {
+      "name": "冬瓜",
+      "imgUrl": "https://www.twfood.cc/img/code/FE1/_.jpg"
+    },
+    {
+      "name": "洋蔥",
+      "imgUrl": "https://www.twfood.cc/img/code/SD1/_.jpg"
     },
     {
       "name": "菜豆",
-      "imgUrl": "https://www.twfood.cc/img/code/FM2/_.jpg"
+      "imgUrl": "https://www.twfood.cc/img/code/FM1/_.jpg"
     },
     {
       "name": "芥藍菜",
       "imgUrl": "https://www.twfood.cc/img/code/LK2/_.jpg"
     },
     {
+      "name": "綠豆芽",
+      "imgUrl": "https://www.twfood.cc/img/code/SX1/_.jpg"
+    },
+    {
       "name": "小白菜",
       "imgUrl": "https://www.twfood.cc/img/code/LB1/_.jpg"
-    },
-    {
-      "name": "紅蘿蔔",
-      "imgUrl": "https://www.twfood.cc/img/code/SB1/_.jpg"
-    },
-    {
-      "name": "韭菜",
-      "imgUrl": "https://www.twfood.cc/img/code/SF3/_.jpg"
     },
     {
       "name": "芹菜",
       "imgUrl": "https://www.twfood.cc/img/code/LG2/_.jpg"
     },
     {
-      "name": "綠豆芽",
-      "imgUrl": "https://www.twfood.cc/img/code/SX1/_.jpg"
-    },
-    {
-      "name": "敏豆",
-      "imgUrl": "https://www.twfood.cc/img/code/FN5/_.jpg"
+      "name": "紅蘿蔔",
+      "imgUrl": "https://www.twfood.cc/img/code/SB1/_.jpg"
     },
     {
       "name": "蘿蔔",
       "imgUrl": "https://www.twfood.cc/img/code/SA32/_.jpg"
     },
     {
+      "name": "韭菜",
+      "imgUrl": "https://www.twfood.cc/img/code/SF3/_.jpg"
+    },
+    {
       "name": "南瓜",
       "imgUrl": "https://www.twfood.cc/img/code/FT1/_.jpg"
+    },
+    {
+      "name": "玉米",
+      "imgUrl": "https://www.twfood.cc/img/code/FY6/_.jpg"
+    },
+    {
+      "name": "番茄",
+      "imgUrl": "https://www.twfood.cc/img/code/FJ3/_.jpg"
+    },
+    {
+      "name": "茄子",
+      "imgUrl": "https://www.twfood.cc/img/code/FI2/_.jpg"
+    },
+    {
+      "name": "胡瓜",
+      "imgUrl": "https://www.twfood.cc/img/code/FC1/_.jpg"
     },
     {
       "name": "A菜",
@@ -104,36 +104,16 @@
   ],
   "fruit": [
     {
-      "name": "桃子",
-      "imgUrl": "https://www.twfood.cc/img/code/Y3/_.jpg"
-    },
-    {
-      "name": "李",
-      "imgUrl": "https://www.twfood.cc/img/code/N3/_.jpg"
-    },
-    {
-      "name": "檸檬",
-      "imgUrl": "https://www.twfood.cc/img/code/F1/_.jpg"
-    },
-    {
-      "name": "梨",
-      "imgUrl": "https://www.twfood.cc/img/code/O2/_.jpg"
-    },
-    {
-      "name": "桶柑",
-      "imgUrl": "https://www.twfood.cc/img/code/D1/_.jpg"
-    },
-    {
-      "name": "鳳梨",
-      "imgUrl": "https://www.twfood.cc/img/code/B2/_.jpg"
-    },
-    {
       "name": "西瓜",
       "imgUrl": "https://www.twfood.cc/img/code/T2/_.jpg"
     },
     {
       "name": "芒果",
       "imgUrl": "https://www.twfood.cc/img/code/R1/_.jpg"
+    },
+    {
+      "name": "鳳梨",
+      "imgUrl": "https://www.twfood.cc/img/code/B2/_.jpg"
     },
     {
       "name": "木瓜",
@@ -144,52 +124,68 @@
       "imgUrl": "https://www.twfood.cc/img/code/A1/_.jpg"
     },
     {
+      "name": "荔枝",
+      "imgUrl": "https://www.twfood.cc/img/code/J1/_.jpg"
+    },
+    {
       "name": "小玉",
       "imgUrl": "https://www.twfood.cc/img/code/T5/_.jpg"
+    },
+    {
+      "name": "梨",
+      "imgUrl": "https://www.twfood.cc/img/code/O2/_.jpg"
     },
     {
       "name": "芭樂",
       "imgUrl": "https://www.twfood.cc/img/code/P1/_.jpg"
     },
     {
-      "name": "荔枝",
-      "imgUrl": "https://www.twfood.cc/img/code/J1/_.jpg"
-    },
-    {
-      "name": "梅",
-      "imgUrl": "https://www.twfood.cc/img/code/41/_.jpg"
-    },
-    {
-      "name": "香瓜",
-      "imgUrl": "https://www.twfood.cc/img/code/V1/_.jpg"
+      "name": "蕃茄",
+      "imgUrl": "https://www.twfood.cc/img/code/72/_.jpg"
     },
     {
       "name": "哈密瓜",
       "imgUrl": "https://www.twfood.cc/img/code/W2/_.jpg"
     },
     {
-      "name": "蕃茄",
-      "imgUrl": "https://www.twfood.cc/img/code/72/_.jpg"
-    },
-    {
       "name": "椰子",
       "imgUrl": "https://www.twfood.cc/img/code/11/_.jpg"
+    },
+    {
+      "name": "李",
+      "imgUrl": "https://www.twfood.cc/img/code/N3/_.jpg"
+    },
+    {
+      "name": "香瓜",
+      "imgUrl": "https://www.twfood.cc/img/code/V1/_.jpg"
     },
     {
       "name": "蓮霧",
       "imgUrl": "https://www.twfood.cc/img/code/Q1/_.jpg"
     },
     {
-      "name": "蛋黃果",
-      "imgUrl": "https://www.twfood.cc/img/code/G1/_.jpg"
+      "name": "桃子",
+      "imgUrl": "https://www.twfood.cc/img/code/Y3/_.jpg"
+    },
+    {
+      "name": "紅龍果",
+      "imgUrl": "https://www.twfood.cc/img/code/812/_.jpg"
+    },
+    {
+      "name": "橄欖",
+      "imgUrl": "https://www.twfood.cc/img/code/G7/_.jpg"
+    },
+    {
+      "name": "檸檬",
+      "imgUrl": "https://www.twfood.cc/img/code/F1/_.jpg"
     },
     {
       "name": "葡萄柚",
       "imgUrl": "https://www.twfood.cc/img/code/H41/_.jpg"
     },
     {
-      "name": "桔子",
-      "imgUrl": "https://www.twfood.cc/img/code/F4/_.jpg"
+      "name": "波蘿蜜",
+      "imgUrl": "https://www.twfood.cc/img/code/G9/_.jpg"
     },
     {
       "name": "葡萄",
@@ -200,8 +196,12 @@
       "imgUrl": "https://www.twfood.cc/img/code/51/_.jpg"
     },
     {
-      "name": "波蘿蜜",
-      "imgUrl": "https://www.twfood.cc/img/code/G9/_.jpg"
+      "name": "桔子",
+      "imgUrl": "https://www.twfood.cc/img/code/F4/_.jpg"
+    },
+    {
+      "name": "無子檸檬",
+      "imgUrl": "https://www.twfood.cc/img/code/F5/_.jpg"
     }
   ]
 }
